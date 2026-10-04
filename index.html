@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>NativeStack | Custom desktop software in C++ and Qt</title>
+<meta name="description" content="NativeStack builds fast, reliable desktop applications and business tools in C++ and Qt for startups and small businesses.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700;800&family=Public+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#0B1F3A; --teal:#00C2A8;
+  --bg:#F3F6FA; --surface:#FFFFFF; --text:#0B1F3A; --muted:#4F6078; --accent:#007F6E; --border:#D9E1EC;
+  --head:"Bricolage Grotesque","Segoe UI",Helvetica,Arial,sans-serif;
+  --body:"Public Sans","Segoe UI",Helvetica,Arial,sans-serif;
+  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){--bg:#07142A;--surface:#0E2342;--text:#EAF1FB;--muted:#9FB1C9;--accent:#00C2A8;--border:#1C3558}
+}
+:root[data-theme="dark"]{--bg:#07142A;--surface:#0E2342;--text:#EAF1FB;--muted:#9FB1C9;--accent:#00C2A8;--border:#1C3558}
+html{scroll-padding-top:calc(env(safe-area-inset-top,0px) + 72px);scroll-behavior:smooth}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:400 17px/1.6 var(--body);-webkit-font-smoothing:antialiased}
+a{color:inherit}
+:focus-visible{outline:3px solid var(--teal);outline-offset:3px;border-radius:4px}
+.wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+h1,h2,h3{font-family:var(--head);line-height:1.1;margin:0;letter-spacing:-.02em}
+
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:10;background:var(--navy);color:#fff}
+.nav{display:flex;align-items:center;justify-content:space-between;height:64px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;font:700 21px var(--head);letter-spacing:-.02em}
+.brand span{color:var(--teal)}
+.nav nav{display:flex;gap:26px;align-items:center;font-size:15px}
+.nav nav a{text-decoration:none;color:#C9D6E8}
+.nav nav a:hover{color:#fff}
+.btn{display:inline-block;padding:13px 22px;border-radius:10px;font:600 16px var(--body);text-decoration:none;border:2px solid transparent}
+.btn.primary{background:var(--teal);color:#05221D}
+.btn.primary:hover{background:#2DDBC3}
+.btn.ghost{border-color:rgba(255,255,255,.35);color:#fff}
+.btn.ghost:hover{border-color:#fff}
+.nav .btn{padding:9px 16px;font-size:14px}
+
+.hero{background:var(--navy);color:#fff;padding:72px 0 88px}
+.hero .wrap{display:grid;grid-template-columns:1.1fr .9fr;gap:48px;align-items:center}
+.hero h1{font-size:clamp(38px,5.6vw,64px);font-weight:800}
+.hero p{color:#B9C8DE;font-size:19px;max-width:34em;margin:22px 0 32px}
+.hero .actions{display:flex;gap:14px;flex-wrap:wrap}
+
+/* the stack: three layered native-style app windows */
+.stack{position:relative;height:360px}
+.win{position:absolute;border-radius:12px;overflow:hidden;box-shadow:0 18px 40px rgba(0,0,0,.35)}
+.win .bar{height:30px;display:flex;align-items:center;gap:6px;padding:0 12px}
+.win .bar i{width:10px;height:10px;border-radius:50%;background:currentColor;opacity:.5}
+.w1{left:0;top:0;width:78%;height:230px;background:#16335C;color:#8FA6C7}
+.w2{left:11%;top:62px;width:78%;height:230px;background:#1E4274;color:#A9BDDA}
+.w3{left:22%;top:124px;width:78%;height:230px;background:#F3F6FA;color:#0B1F3A}
+.w3 .bar{background:#E3EAF3}
+.w3 .body{display:grid;grid-template-columns:70px 1fr;height:200px}
+.w3 .side{background:#E9EFF6;padding:14px 10px;display:grid;gap:10px;align-content:start}
+.w3 .side b{display:block;height:8px;border-radius:4px;background:#B9C7DA}
+.w3 .side b:first-child{background:var(--teal)}
+.w3 .main{padding:16px;display:grid;gap:10px;align-content:start}
+.w3 .main b{display:block;height:10px;border-radius:5px;background:#CBD6E5}
+.w3 .main b:nth-child(1){width:55%;height:14px;background:#0B1F3A}
+.w3 .main b:nth-child(3){width:85%}
+.w3 .main b:nth-child(4){width:70%}
+.w3 .main em{display:inline-block;width:92px;height:28px;border-radius:7px;background:var(--teal);margin-top:6px}
+
+section{padding:84px 0}
+h2{font-size:clamp(30px,4vw,42px);font-weight:700;max-width:18em}
+.lede{color:var(--muted);max-width:36em;margin:14px 0 0}
+
+.services{margin-top:40px;border-top:1px solid var(--border)}
+.row{display:grid;grid-template-columns:.8fr 1.2fr;gap:32px;padding:30px 0;border-bottom:1px solid var(--border)}
+.row h3{font-size:24px;font-weight:700}
+.row p{margin:0;color:var(--muted);max-width:38em}
+
+.steps{list-style:none;margin:40px 0 0;padding:0;display:grid;grid-template-columns:repeat(4,1fr);gap:20px;counter-reset:s}
+.steps li{counter-increment:s;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:22px}
+.steps li::before{content:counter(s);display:inline-grid;place-items:center;width:34px;height:34px;border-radius:50%;background:var(--navy);color:#fff;font:700 15px var(--head);margin-bottom:14px}
+.steps h3{font-size:19px;margin-bottom:6px}
+.steps p{margin:0;font-size:15px;color:var(--muted)}
+
+.why{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:start}
+.why dl{margin:0;display:grid;gap:22px}
+.why dt{font:700 20px var(--head)}
+.why dd{margin:4px 0 0;color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:10px;margin-top:26px}
+.chips span{padding:7px 14px;border:1px solid var(--border);border-radius:999px;background:var(--surface);font-size:14px;font-weight:500}
+
+.contact{background:var(--navy);color:#fff;text-align:left}
+.contact h2{color:#fff}
+.contact p{color:#B9C8DE;max-width:34em;margin:14px 0 28px}
+.contact .actions{display:flex;gap:14px;flex-wrap:wrap}
+footer{background:var(--navy);color:#8FA6C7;font-size:14px;padding:22px 0 26px;border-top:1px solid #1C3558}
+
+
+/* hero entrance (one moment) */
+.stack::before{content:"";position:absolute;inset:-10% -5%;background:radial-gradient(closest-side,rgba(0,194,168,.28),transparent);z-index:0}
+.win{z-index:1;animation:rise .8s cubic-bezier(.2,.7,.2,1) both}
+.w2{animation-delay:.15s}.w3{animation-delay:.3s}
+@keyframes rise{from{opacity:0;transform:translateY(28px)}}
+@media (prefers-reduced-motion:reduce){.win{animation:none}}
+
+/* work */
+.projects{margin-top:40px;display:grid;grid-template-columns:repeat(6,1fr);gap:20px}
+.card{display:flex;flex-direction:column;text-decoration:none;background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;transition:transform .2s,border-color .2s,box-shadow .2s}
+.card.a{grid-column:span 2}.card.b{grid-column:span 3}
+.card:hover{transform:translateY(-4px);border-color:var(--teal);box-shadow:0 14px 30px rgba(11,31,58,.16)}
+.art{height:150px;display:grid;place-items:center}
+.art svg{width:120px;height:120px}
+.card .body{padding:20px 22px 22px;display:flex;flex-direction:column;gap:10px;flex:1}
+.card h3{font-size:22px;font-weight:700}
+.card p{margin:0;color:var(--muted);font-size:15px;flex:1}
+.tags{display:flex;flex-wrap:wrap;gap:8px}
+.tags span{font-size:12.5px;font-weight:600;padding:3px 10px;border-radius:999px;background:var(--bg);border:1px solid var(--border)}
+.meta{display:flex;justify-content:space-between;align-items:center;font-size:14px;font-weight:600;color:var(--accent);margin-top:4px}
+.meta small{color:var(--muted);font-weight:500;font-size:13px}
+@media (max-width:860px){
+  .projects{grid-template-columns:1fr 1fr}.card.a,.card.b{grid-column:auto}
+  .hero .wrap,.why{grid-template-columns:1fr}
+  .stack{height:330px;max-width:460px}
+  .row{grid-template-columns:1fr;gap:10px}
+  .steps{grid-template-columns:1fr 1fr}
+  .nav nav a.hide{display:none}
+  section{padding:64px 0}
+}
+@media (max-width:520px){.projects{grid-template-columns:1fr}.steps{grid-template-columns:1fr}.nav nav{gap:14px}}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap nav">
+    <a class="brand" href="#top" aria-label="NativeStack home">
+      <svg width="34" height="34" viewBox="0 0 512 512" aria-hidden="true"><rect width="512" height="512" rx="104" fill="#16335C"/><rect x="132" y="128" width="58" height="256" rx="12" fill="#fff"/><rect x="322" y="128" width="58" height="256" rx="12" fill="#fff"/><polygon points="132,128 194,128 380,384 318,384" fill="#00C2A8"/></svg>
+      Native<span>Stack</span>
+    </a>
+    <nav>
+      <a class="hide" href="#work">Work</a>
+      <a class="hide" href="#services">Services</a>
+      <a class="hide" href="#process">Process</a>
+      <a class="hide" href="#why">Why us</a>
+      <a class="btn primary" href="#contact">Start a project</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+  <div class="hero">
+    <div class="wrap">
+      <div>
+        <h1>Desktop software that runs fast and keeps running.</h1>
+        <p>NativeStack designs and builds custom desktop applications and business tools in C++ and Qt for startups and small businesses that need software that is quick, stable, and theirs to keep.</p>
+        <div class="actions">
+          <a class="btn primary" href="#contact">Start a project</a>
+          <a class="btn ghost" href="#services">See what we build</a>
+        </div>
+      </div>
+      <div class="stack" role="img" aria-label="Illustration of layered desktop application windows">
+        <div class="win w1"><div class="bar"><i></i><i></i><i></i></div></div>
+        <div class="win w2"><div class="bar"><i></i><i></i><i></i></div></div>
+        <div class="win w3">
+          <div class="bar"><i></i><i></i><i></i></div>
+          <div class="body">
+            <div class="side"><b></b><b></b><b></b><b></b></div>
+            <div class="main"><b></b><b></b><b></b><b></b><span><em></em></span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <section id="work">
+    <div class="wrap">
+      <h2>Work you can open and read</h2>
+      <p class="lede">Real projects in C++, game development, computer vision, and the web. Open any card to see the source code on GitHub.</p>
+      <div class="projects">
+        <a class="card a" href="https://github.com/ahmadraza2730/Image-Editor" target="_blank" rel="noopener" aria-label="Image Editor on GitHub">
+          <div class="art" style="background:linear-gradient(135deg,#0B1F3A,#1E4274)"><svg viewBox="0 0 120 120" aria-hidden="true"><rect x="14" y="26" width="92" height="68" rx="10" fill="#fff" opacity=".95"/><circle cx="40" cy="48" r="8" fill="#FFB547"/><path d="M20 88l26-26 18 16 14-14 22 24z" fill="#00A892"/><rect x="14" y="100" width="92" height="6" rx="3" fill="#fff" opacity=".5"/><circle cx="76" cy="103" r="6" fill="#fff"/></svg></div>
+          <div class="body"><h3>Image Editor</h3><p>A C++ image editor built from scratch, with filters, transformations, and pixel-level processing.</p><div class="tags"><span>C++</span><span>Image processing</span></div><div class="meta"><span>View on GitHub</span><small></small></div></div></a>
+        <a class="card a" href="https://github.com/ahmadraza2730/Tumble-Pop-Remake" target="_blank" rel="noopener" aria-label="Tumble Pop Remake on GitHub">
+          <div class="art" style="background:linear-gradient(135deg,#7A2E8E,#E0457B)"><svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="38" cy="44" r="22" fill="#fff" opacity=".9"/><circle cx="82" cy="34" r="14" fill="#fff" opacity=".6"/><circle cx="76" cy="82" r="26" fill="#fff" opacity=".35"/><circle cx="30" cy="40" r="6" fill="#fff"/><path d="M52 98l8-16 8 16-8-4z" fill="#FFB547"/></svg></div>
+          <div class="body"><h3>Tumble Pop Remake</h3><p>A C++ remake of the arcade classic with core gameplay, collision detection, and level logic.</p><div class="tags"><span>C++</span><span>Game dev</span></div><div class="meta"><span>View on GitHub</span><small>1 star</small></div></div></a>
+        <a class="card a" href="https://github.com/ahmadraza2730/Metal-Slug-Remake" target="_blank" rel="noopener" aria-label="Metal Slug Remake on GitHub">
+          <div class="art" style="background:linear-gradient(135deg,#1F5F3F,#00A892)"><svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="56" r="30" fill="none" stroke="#fff" stroke-width="5"/><path d="M60 14v26M60 72v26M18 56h26M76 56h26" stroke="#fff" stroke-width="5" stroke-linecap="round"/><circle cx="60" cy="56" r="5" fill="#FFB547"/><path d="M8 108q22-18 44-6t60-8" fill="none" stroke="#fff" stroke-width="4" opacity=".6"/></svg></div>
+          <div class="body"><h3>Metal Slug Remake</h3><p>A 2D action game in C++ and SFML with enemy AI, Perlin-noise terrain, and a full weapon and damage system.</p><div class="tags"><span>C++</span><span>SFML</span><span>OOP</span></div><div class="meta"><span>View on GitHub</span><small>5 stars, 2 forks</small></div></div></a>
+        <a class="card b" href="https://github.com/ahmadraza2730/AI-Hand-Detector" target="_blank" rel="noopener" aria-label="AI Hand Detector on GitHub">
+          <div class="art" style="background:linear-gradient(135deg,#0B1F3A,#0F5C6B)"><svg viewBox="0 0 120 120" aria-hidden="true"><g stroke="#fff" stroke-width="3" opacity=".85"><path d="M60 98V70M60 70L30 52L22 30M60 70L44 40L42 14M60 70L60 36L60 8M60 70L76 40L80 16M60 70L90 56L102 38"/></g><g fill="#00C2A8"><circle cx="60" cy="98" r="5"/><circle cx="60" cy="70" r="5"/><circle cx="22" cy="30" r="5"/><circle cx="42" cy="14" r="5"/><circle cx="60" cy="8" r="5"/><circle cx="80" cy="16" r="5"/><circle cx="102" cy="38" r="5"/></g></svg></div>
+          <div class="body"><h3>AI Hand Detector</h3><p>Real-time hand detection and tracking with gesture and landmark recognition, built on C++, Python, OpenCV, and MediaPipe.</p><div class="tags"><span>C++</span><span>Python</span><span>OpenCV</span><span>MediaPipe</span></div><div class="meta"><span>View on GitHub</span><small>3 stars</small></div></div></a>
+        <a class="card b" href="https://github.com/ahmadraza2730/Fuel-Expense-Calculator" target="_blank" rel="noopener" aria-label="Fuel Expense Calculator on GitHub">
+          <div class="art" style="background:linear-gradient(135deg,#C2410C,#F59E0B)"><svg viewBox="0 0 120 120" aria-hidden="true"><path d="M16 84a44 44 0 1 1 88 0" fill="none" stroke="#fff" stroke-width="10" stroke-linecap="round" opacity=".4"/><path d="M16 84a44 44 0 0 1 60-41" fill="none" stroke="#00C2A8" stroke-width="10" stroke-linecap="round"/><path d="M60 84L82 54" stroke="#fff" stroke-width="6" stroke-linecap="round"/><circle cx="60" cy="84" r="8" fill="#FFB547"/><rect x="34" y="98" width="52" height="8" rx="4" fill="#fff" opacity=".6"/></svg></div>
+          <div class="body"><h3>Fuel Expense Calculator</h3><p>A dashboard-style car mileage and trip fuel cost calculator with average tracking, car comparison, and a tips engine. No dependencies.</p><div class="tags"><span>HTML</span><span>CSS</span><span>JavaScript</span></div><div class="meta"><span>View on GitHub</span><small></small></div></div></a>
+      </div>
+    </div>
+  </section>
+
+  <section id="services" style="padding-top:0">
+    <div class="wrap">
+      <h2>What we build</h2>
+      <p class="lede">Three services, each with a defined scope, a fixed price, and a delivery date agreed before work starts.</p>
+      <div class="services">
+        <div class="row">
+          <h3>Desktop apps in C++ and Qt</h3>
+          <p>Applications for Windows, Linux, and macOS that feel native and respond instantly: utilities, data tools, device and instrument software, and performance-critical programs.</p>
+        </div>
+        <div class="row">
+          <h3>Business tools for small shops</h3>
+          <p>Inventory, billing, and job-tracking software for workshops, dealers, and local businesses that have outgrown notebooks and spreadsheets.</p>
+        </div>
+        <div class="row">
+          <h3>Data and machine learning</h3>
+          <p>Price prediction models, data scraping and cleaning, and dashboards that turn the data you already have into decisions.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="process" style="padding-top:0">
+    <div class="wrap">
+      <h2>How a project works</h2>
+      <ol class="steps">
+        <li><h3>Tell us the problem</h3><p>Describe what you need in a short message or call.</p></li>
+        <li><h3>Scope and quote</h3><p>You get a written scope, a fixed price, and a delivery date.</p></li>
+        <li><h3>Build in milestones</h3><p>You see working software at each milestone and give feedback early.</p></li>
+        <li><h3>Hand over</h3><p>You receive the finished app, the source code, and support after delivery.</p></li>
+      </ol>
+    </div>
+  </section>
+
+  <section id="why" style="padding-top:0">
+    <div class="wrap why">
+      <div>
+        <h2>Software you can rely on</h2>
+        <p class="lede">We keep the toolset small and use it well, so your project stays fast to build and easy to maintain.</p>
+        <div class="chips"><span>C++</span><span>Qt</span><span>Python</span><span>SQL</span><span>Machine learning</span><span>Git</span></div>
+      </div>
+      <dl>
+        <div><dt>Native speed</dt><dd>Compiled C++ keeps your app responsive, even with large files and heavy calculations.</dd></div>
+        <div><dt>Fixed scope and price</dt><dd>You know the cost and the delivery date before we write any code.</dd></div>
+        <div><dt>You own the code</dt><dd>When the project is paid for, the source code is yours.</dd></div>
+      </dl>
+    </div>
+  </section>
+
+  <section class="contact" id="contact">
+    <div class="wrap">
+      <h2>Have a project in mind?</h2>
+      <p>Send a message describing what you need. You will get a reply with questions or a rough plan.</p>
+      <div class="actions">
+        <a class="btn primary" href="https://www.linkedin.com/company/nativestackmain" target="_blank" rel="noopener">Message on LinkedIn</a>
+        <a class="btn ghost" href="https://github.com/ahmadraza2730" target="_blank" rel="noopener">View GitHub</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">&copy; 2026 NativeStack. Founded by Muhammad Ahmad.</div>
+</footer>
+</body>
+</html>
